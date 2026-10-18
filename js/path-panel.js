@@ -21,8 +21,9 @@ function del(i){var g=IB.abs(read()),e=ends(g);g.splice(i,1);if(i===0&&g.length)
 function dup(i){var g=IB.abs(read()),q=JSON.parse(JSON.stringify(g[i])),k;
  if(q.c==='H')q.n[0]+=2;else if(q.c==='V')q.n[0]+=2;else if(q.c==='A'){q.n[5]+=2;q.n[6]+=2}else for(k=0;k<q.n.length;k+=2){q.n[k]+=2;q.n[k+1]+=2}
  g.splice(i+1,0,q);S.seg=i+1;save(g)}
-function mv(i,d){var g=IB.abs(read()),j=i+d;if(j<0||j>=g.length)return;var t=g[i];g[i]=g[j];g[j]=t;
- if(g[0].c!=='M'){IB.msg('A path has to start with a Move (M).',1);return}S.seg=j;save(g)}
+function moveSeg(f,t){var g=IB.abs(read()),q=g.splice(f,1)[0];g.splice(t,0,q);
+ if(g[0].c!=='M'){IB.msg('A path has to start with a Move (M).',1);return}S.seg=t;save(g)}
+function mv(i,d){var j=i+d;if(j>=0&&j<read().length)moveSeg(i,j)}
 function allAbs(){save(IB.abs(read()))}
 function allRel(){var g=IB.abs(read()),e=ends(g);save(g.map(function(q,i){return i?rel(q,e[i-1]):q}))}
 function types(fn){var a=UP.map(function(c){return{label:c+'   '+NM[c],fn:function(){fn(c)}}});
@@ -39,7 +40,7 @@ function row(q,i){var d=document.createElement('div'),h=document.createElement('
  [['Absolute',UP],['Relative',UP.map(function(c){return c.toLowerCase()})]].forEach(function(gp){var og=document.createElement('optgroup');og.label=gp[0];
   gp[1].forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c+'  '+NM[c.toUpperCase()];og.appendChild(o)});sel.appendChild(og)});
  sel.value=q.c;sel.onchange=function(){retype(i,sel.value)};x.textContent='\u00d7';x.title='Delete point';x.onclick=function(e){e.stopPropagation();del(i)};
- h.appendChild(n);h.appendChild(sel);h.appendChild(x);a.className='ar';
+ h.appendChild(grip(d,i,moveSeg));h.appendChild(n);h.appendChild(sel);h.appendChild(x);a.className='ar';
  AR[U].split(' ').forEach(function(nm,k){if(!nm)return;var inp=document.createElement('input');inp.type='number';inp.step=S.step||'any';inp.title=nm;inp.placeholder=nm;inp.value=q.n[k];
   inp.oninput=function(){var g=read();if(!g[i])return;g[i].n[k]=parseFloat(inp.value)||0;cur().a.d=IB.ps(g);IB.update('panel')};inp.onchange=IB.commit;a.appendChild(inp)});
  d.appendChild(h);d.appendChild(a);
@@ -52,8 +53,38 @@ function render(){var g=read(),rows=list.children,same=rows.length===g.length,i;
  else Array.prototype.forEach.call(rows,function(r,i){var ins=r.getElementsByTagName('input');for(var k=0;k<ins.length;k++)if(document.activeElement!==ins[k])ins[k].value=g[i].n[k]});
  mark()}
 IB.segsPanel=function(box){var w=document.createElement('div'),h=document.createElement('div'),b=document.createElement('button');
- w.className='segs';h.className='segh';h.innerHTML='<b>Path points</b>';b.textContent='+ Add point';
+ kind='path';w.className='segs';h.className='segh';h.innerHTML='<b>Path points</b>';b.textContent='+ Add point';
  b.onclick=function(){var r=b.getBoundingClientRect();IB.menu(r.left,r.bottom+4,types(function(c){ins(read().length-1,c)}))};
  h.appendChild(b);list=document.createElement('div');w.appendChild(h);w.appendChild(list);box.appendChild(w);render()};
-IB.segs=function(src){if(src==='panel'||!list||!document.body.contains(list)||!cur())return;render()};
+IB.segs=function(src){if(src==='panel'||!list||!document.body.contains(list))return;
+ if(kind==='path'){if(cur())render()}else if(curp())prender()};
+IB.segMove=moveSeg;
+
+/* drag a grip to reorder points (works for path points and polyline / polygon points) */
+var from=-1,kind='path';
+function clearOver(){Array.prototype.forEach.call(list.children,function(r){r.className=r.className.replace(' over','')})}
+function grip(d,i,fn){var g=document.createElement('span');g.className='grip';g.textContent='\u2630';g.title='Drag to reorder';g.draggable=true;
+ g.ondragstart=function(e){from=i;e.dataTransfer.setData('text/plain',String(i));e.dataTransfer.effectAllowed='move';if(e.dataTransfer.setDragImage)e.dataTransfer.setDragImage(d,12,12)};
+ g.ondragend=function(){from=-1;clearOver()};
+ d.ondragover=function(e){if(from<0)return;e.preventDefault();clearOver();d.className+=' over'};
+ d.ondrop=function(e){e.preventDefault();var f=from;from=-1;clearOver();if(f>=0&&f!==i)fn(f,i)};return g}
+
+/* polyline and polygon point list */
+function curp(){var s=S.shapes[S.sel];return s&&(s.tag==='polyline'||s.tag==='polygon')?s:null}
+function pread(){var s=curp(),p=s?IB.pts(s):[],o=[];for(var i=0;i+1<p.length;i+=2)o.push([p[i],p[i+1]]);return o}
+function pset(o,src){var f=[];o.forEach(function(q){f.push(IB.r(q[0]),IB.r(q[1]))});curp().a.points=f.join(' ');IB.update(src)}
+function pmove(f,t){var o=pread(),q=o.splice(f,1)[0];o.splice(t,0,q);pset(o);IB.commit()}
+function prow(q,i){var d=document.createElement('div'),h=document.createElement('div'),n=document.createElement('span'),x=document.createElement('button');
+ d.className='seg';h.className='hd';n.className='no';n.textContent=i+1;h.appendChild(grip(d,i,pmove));h.appendChild(n);
+ ['x','y'].forEach(function(nm,k){var inp=document.createElement('input');inp.type='number';inp.step=S.step||'any';inp.title=nm;inp.placeholder=nm;inp.value=q[k];
+  inp.oninput=function(){var o=pread();if(!o[i])return;o[i][k]=parseFloat(inp.value)||0;pset(o,'panel')};inp.onchange=IB.commit;h.appendChild(inp)});
+ x.textContent='\u00d7';x.title='Delete point';x.onclick=function(){var o=pread();o.splice(i,1);pset(o);IB.commit()};h.appendChild(x);d.appendChild(h);return d}
+function prender(){var o=pread(),rows=list.children;
+ if(rows.length!==o.length){list.innerHTML='';o.forEach(function(q,i){list.appendChild(prow(q,i))})}
+ else Array.prototype.forEach.call(rows,function(r,i){var ins=r.getElementsByTagName('input');for(var k=0;k<2;k++)if(document.activeElement!==ins[k])ins[k].value=o[i][k]})}
+IB.ptsPanel=function(box){var w=document.createElement('div'),h=document.createElement('div'),b=document.createElement('button');kind='poly';
+ w.className='segs';h.className='segh';h.innerHTML='<b>Points</b>';b.textContent='+ Add point';
+ b.onclick=function(){var o=pread(),l=o[o.length-1]||[3,3];o.push([l[0]+3,l[1]+3]);pset(o);IB.commit()};
+ h.appendChild(b);list=document.createElement('div');w.appendChild(h);w.appendChild(list);box.appendChild(w);prender()};
+IB.pointMove=pmove;
 })();

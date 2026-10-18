@@ -46,7 +46,7 @@ IB.colorize=function(label,inp){var c=document.createElement('input');c.type='co
 /* import / export */
 function save(name,blob){if(navigator.msSaveBlob){navigator.msSaveBlob(blob,name);return}
  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a)}
-function png(w){var svg=IB.ser().replace(/currentColor/g,'#1d1d1f').replace('width="'+S.w+'" height="'+S.h+'"','width="'+w+'" height="'+Math.round(w*S.h/S.w)+'"'),
+IB.saveBlob=save;function png(w){var svg=IB.ser().replace(/currentColor/g,'#1d1d1f').replace('width="'+S.w+'" height="'+S.h+'"','width="'+w+'" height="'+Math.round(w*S.h/S.w)+'"'),
  img=new Image(),cv=document.createElement('canvas');cv.width=w;cv.height=Math.round(w*S.h/S.w);
  img.onload=function(){cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
   if(cv.toBlob)cv.toBlob(function(b){save('icon-'+w+'.png',b)});else IB.msg('This browser cannot export PNG.',1)};
@@ -57,7 +57,7 @@ $('export').onclick=function(){var b=this.getBoundingClientRect();
   {label:'Copy SVG code',fn:function(){var c=$('code');c.value=IB.ser();c.select();try{document.execCommand('copy');IB.msg('Copied.')}catch(x){IB.msg('Press Ctrl+C to copy.')}}}])};
 function imp(t){var res=IB.load(t);if(res===false){IB.msg('That file is not valid SVG.',1);return}
  S.sel=-1;S.seg=-1;IB.msg(res===true?'Imported.':res);IB.layout();IB.buildInsp();IB.update();IB.commit()}
-function readFile(f){var r=new FileReader();r.onload=function(){imp(r.result)};r.readAsText(f)}
+IB.importText=imp;function readFile(f){var r=new FileReader();r.onload=function(){imp(r.result)};r.readAsText(f)}
 var fi=document.createElement('input');fi.type='file';fi.accept='.svg,image/svg+xml';
 $('import').onclick=function(){fi.value='';fi.click()};fi.onchange=function(){if(fi.files[0])readFile(fi.files[0])};
 window.addEventListener('dragover',function(e){e.preventDefault()});

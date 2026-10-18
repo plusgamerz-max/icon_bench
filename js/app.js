@@ -1,7 +1,7 @@
 (function(){
 var IB=window.IB={},NS='http://www.w3.org/2000/svg',ACC='#0a84ff';
 function $(id){return document.getElementById(id)}
-var S={w:24,h:24,root:{fill:'none',stroke:'currentColor','stroke-width':'2','stroke-linecap':'round','stroke-linejoin':'round'},shapes:[],sel:-1,tool:'select',step:1,zoom:1,seg:-1};
+var S={w:24,h:24,root:{fill:'none',stroke:'currentColor','stroke-width':'2','stroke-linecap':'round','stroke-linejoin':'round'},shapes:[],sel:-1,tool:'select',step:1,zoom:1,seg:-1,vx:0,vy:0};
 var scale=10,drag=null,drawing=-1,ghost=null,hist=[],hi=-1,fields=[],curH=[],ct=0;
 var GEO={line:['x1','y1','x2','y2'],rect:['x','y','width','height','rx','ry'],circle:['cx','cy','r'],ellipse:['cx','cy','rx','ry'],polyline:['points'],polygon:['points'],path:['d']};
 var STY=['stroke','stroke-width','fill','stroke-linecap','stroke-linejoin'];
@@ -31,7 +31,7 @@ function abs(g){var cx=0,cy=0,sx=0,sy=0;
 function pts(s){return (s.a.points||'').match(/-?(?:\d+\.?\d*|\.\d+)/g)?(s.a.points.match(/-?(?:\d+\.?\d*|\.\d+)/g)).map(parseFloat):[]}
 
 /* ---------- model <-> code ---------- */
-function ser(){var o='<svg xmlns="'+NS+'" viewBox="0 0 '+S.w+' '+S.h+'" width="'+S.w+'" height="'+S.h+'"',k;
+function ser(){var o='<svg xmlns="'+NS+'" viewBox="'+S.vx+' '+S.vy+' '+S.w+' '+S.h+'" width="'+S.w+'" height="'+S.h+'"',k;
  for(k in S.root)o+=' '+k+'="'+esc(S.root[k])+'"';o+='>\n';
  S.shapes.forEach(function(s){o+='  <'+s.tag;for(var k in s.a)o+=' '+k+'="'+esc(s.a[k])+'"';o+='/>\n'});
  return o+'</svg>'}
@@ -42,7 +42,7 @@ function load(str){var d=new DOMParser().parseFromString(str,'image/svg+xml');
  for(i=0;i<rt.attributes.length;i++){a=rt.attributes[i];if(!/^(xmlns.*|viewBox|width|height|version|xml:.*)$/.test(a.name))root[a.name]=a.value}
  for(i=0;i<rt.childNodes.length;i++){c=rt.childNodes[i];if(c.nodeType!==1)continue;
   if(GEO[c.nodeName]){at={};for(j=0;j<c.attributes.length;j++)at[c.attributes[j].name]=c.attributes[j].value;sh.push({tag:c.nodeName,a:at})}else skip++}
- S.w=w;S.h=h;S.root=root;S.shapes=sh;if(S.sel>=sh.length)S.sel=-1;
+ S.w=w;S.h=h;S.vx=parseFloat(vb[0])||0;S.vy=parseFloat(vb[1])||0;S.root=root;S.shapes=sh;if(S.sel>=sh.length)S.sel=-1;
  return skip?'Ignored '+skip+' element(s) this editor does not support (such as g).':true}
 function commit(){var s=ser();if(hist[hi]===s)return;hist=hist.slice(0,hi+1);hist.push(s);hi++;if(hist.length>100){hist.shift();hi--}}
 function undo(){if(hi>0){hi--;load(hist[hi]);layout();buildInsp();update()}}
@@ -76,17 +76,17 @@ function move(s,dx,dy){var t=s.tag;function sh(k,d){s.a[k]=String(r(num(s,k)+d))
 
 /* ---------- drawing the stage ---------- */
 function layout(){var w=$('wrap'),cw=w.clientWidth-40,ch=w.clientHeight-40;
- scale=Math.max(.5,Math.max(1,Math.floor(Math.min(cw/S.w,ch/S.h)))*S.zoom);
- st.setAttribute('width',S.w*scale);st.setAttribute('height',S.h*scale);st.setAttribute('viewBox','0 0 '+S.w+' '+S.h);
- var g=$('grid'),i,ev=scale>=8?1:scale>=4?2:4;clear(g);
- for(i=0;i<=S.w;i+=ev)el('line',{x1:i,y1:0,x2:i,y2:S.h,stroke:i%4?'#e6ecf7':'#c3d1ea','stroke-width':1/scale},g);
- for(i=0;i<=S.h;i+=ev)el('line',{x1:0,y1:i,x2:S.w,y2:i,stroke:i%4?'#e6ecf7':'#c3d1ea','stroke-width':1/scale},g);
+ var f=Math.min(cw/S.w,ch/S.h);scale=Math.max(.05,(f>=1?Math.floor(f):f)*S.zoom);
+ st.setAttribute('width',S.w*scale);st.setAttribute('height',S.h*scale);st.setAttribute('viewBox',S.vx+' '+S.vy+' '+S.w+' '+S.h);
+ var g=$('grid'),i,ev=1;while(ev*scale<8)ev*=2;clear(g);
+ for(i=0;i<=S.w;i+=ev)el('line',{x1:S.vx+i,y1:S.vy,x2:S.vx+i,y2:S.vy+S.h,stroke:(i/ev)%4?'#e6ecf7':'#c3d1ea','stroke-width':1/scale},g);
+ for(i=0;i<=S.h;i+=ev)el('line',{x1:S.vx,y1:S.vy+i,x2:S.vx+S.w,y2:S.vy+i,stroke:(i/ev)%4?'#e6ecf7':'#c3d1ea','stroke-width':1/scale},g);
  draw()}
 function draw(){var art=$('art'),ui=$('ui'),k;clear(art);clear(ui);
  for(k=art.attributes.length-1;k>=0;k--){if(art.attributes[k].name!=='id')art.removeAttribute(art.attributes[k].name)}
  for(k in S.root)art.setAttribute(k,S.root[k]);
  S.shapes.forEach(function(s,i){var e=el(s.tag,s.a,art);e.__i=i});
- var s=S.shapes[S.sel];curH=[];
+ var s=S.tool==='view'?null:S.shapes[S.sel];curH=[];
  if(s){var o=el(s.tag,s.a,ui);o.setAttribute('fill','none');o.setAttribute('stroke',ACC);o.setAttribute('stroke-width',1.5/scale);o.setAttribute('stroke-linecap','butt');o.setAttribute('opacity','.85');o.style.pointerEvents='none';
   curH=handles(s);
   curH.forEach(function(h,i){var c=el('circle',{cx:h.x,cy:h.y,r:(h.c?3.5:5)/scale,fill:h.sg!==undefined&&h.sg===S.seg?'#ff9f0a':(h.c?ACC:'#fff'),stroke:ACC,'stroke-width':1.5/scale},ui);c.__h=i;c.style.cursor='move'})}
@@ -96,7 +96,7 @@ function layers(){var ul=$('layers');ul.innerHTML='';
  S.shapes.forEach(function(s,i){var li=document.createElement('li');li.className=i===S.sel?'on':'';li.textContent=s.tag+'  '+brief(s);li.onclick=function(){select(i)};ul.appendChild(li)})}
 function preview(){var s=ser(),o='';[16,24,48].forEach(function(n){o+='<span>'+s.replace('width="'+S.w+'" height="'+S.h+'"','width="'+n+'" height="'+n+'"')+'</span>'});$('pv').innerHTML=o}
 function update(src){draw();layers();if(src!=='code')$('code').value=ser();refreshInsp();preview();if(IB.segs)IB.segs(src)}
-function select(i){S.sel=i;S.seg=-1;buildInsp();update('sel')}
+function select(i){if(S.tool==='view'&&i>=0)return;S.sel=i;S.seg=-1;buildInsp();update('sel')}
 
 /* ---------- inspector ---------- */
 function row(box,label,kind,get,set,ph,wide){var l=document.createElement('label'),sp=document.createElement('span'),i=document.createElement(kind==='area'?'textarea':'input');
@@ -111,13 +111,13 @@ function buildInsp(){var box=$('insp'),s=S.shapes[S.sel],p;box.innerHTML='';fiel
   row(box,'height','number',function(){return S.h},function(v){S.h=Math.max(1,Math.min(256,parseInt(v,10)||24));layout()});
   STY.forEach(function(k){row(box,k,'text',function(){return S.root[k]||''},function(v){if(v==='')delete S.root[k];else S.root[k]=v})});return}
  p=document.createElement('p');p.textContent=s.tag+', layer '+(S.sel+1)+(s.tag==='path'?'. Dragging a point rewrites the path with absolute coordinates.':'');box.appendChild(p);
- GEO[s.tag].forEach(function(k){var big=k==='d'||k==='points';row(box,k,big?'area':'number',function(){return s.a[k]===undefined?'':s.a[k]},function(v){if(v!=='')s.a[k]=v},'',big)});if(s.tag==='path'&&IB.segsPanel)IB.segsPanel(box);
+ GEO[s.tag].forEach(function(k){var big=k==='d'||k==='points';row(box,k,big?'area':'number',function(){return s.a[k]===undefined?'':s.a[k]},function(v){if(v!=='')s.a[k]=v},'',big)});if(s.tag==='path'&&IB.segsPanel)IB.segsPanel(box);else if((s.tag==='polyline'||s.tag==='polygon')&&IB.ptsPanel)IB.ptsPanel(box);
  STY.forEach(function(k){row(box,k,'text',function(){return s.a[k]===undefined?'':s.a[k]},function(v){if(v==='')delete s.a[k];else s.a[k]=v},S.root[k]||'inherit')})}
 function refreshInsp(){fields.forEach(function(f){if(document.activeElement!==f.i)f.i.value=f.get();if(f.i.sync)f.i.sync()})}
 
 /* ---------- mouse ---------- */
-function pt(e){var b=st.getBoundingClientRect();return{x:(e.clientX-b.left)/scale,y:(e.clientY-b.top)/scale}}
-st.onmousedown=function(e){if(e.button)return;e.preventDefault();
+function pt(e){var b=st.getBoundingClientRect();return{x:S.vx+(e.clientX-b.left)/scale,y:S.vy+(e.clientY-b.top)/scale}}
+st.onmousedown=function(e){if(e.button)return;e.preventDefault();if(S.tool==='view'){var w=$('wrap');drag={m:'pan',sx:e.clientX,sy:e.clientY,l:w.scrollLeft,t:w.scrollTop};return}
  var p=pt(e),x=sn(p.x),y=sn(p.y),t=e.target,tl=S.tool,a;
  if(t.__h!==undefined){var hh=curH[t.__h];drag={m:'h',h:hh};if(hh.sg!==undefined&&hh.sg!==S.seg){S.seg=hh.sg;draw();if(IB.segs)IB.segs()}return}
  if(tl==='select'){if(t.__i!==undefined){drag={m:'mv',lx:x,ly:y};select(t.__i)}else select(-1);return}
@@ -127,11 +127,11 @@ st.onmousedown=function(e){if(e.button)return;e.preventDefault();
  if(tl==='line')a={x1:x,y1:y,x2:x,y2:y};else if(tl==='rect')a={x:x,y:y,width:0,height:0};else if(tl==='circle')a={cx:x,cy:y,r:0};else a={cx:x,cy:y,rx:0,ry:0};
  S.shapes.push({tag:tl,a:a});drag={m:'new',sx:x,sy:y};select(S.shapes.length-1)};
 st.ondblclick=function(){finishPath()};
-document.onmousemove=function(e){var p=pt(e),x=sn(p.x),y=sn(p.y),over=p.x>=0&&p.y>=0&&p.x<=S.w&&p.y<=S.h;
+document.onmousemove=function(e){var p=pt(e),x=sn(p.x),y=sn(p.y),over=p.x>=S.vx&&p.y>=S.vy&&p.x<=S.vx+S.w&&p.y<=S.vy+S.h;
  $('pos').textContent=over?x+', '+y:'';
  if(drawing>=0&&S.shapes[drawing]){var lp=lastPt(S.shapes[drawing]);ghost={x1:lp.x,y1:lp.y,x2:x,y2:y};if(!drag)draw()}
  if(!drag)return;
- var s=S.shapes[S.sel];if(!s)return;
+ if(drag.m==='pan'){var w=$('wrap');w.scrollLeft=drag.l-(e.clientX-drag.sx);w.scrollTop=drag.t-(e.clientY-drag.sy);return}var s=S.shapes[S.sel];if(!s)return;
  if(drag.m==='h'){drag.h.f(x,y)}
  else if(drag.m==='mv'){var dx=x-drag.lx,dy=y-drag.ly;if(!dx&&!dy)return;move(s,dx,dy);drag.lx=x;drag.ly=y}
  else{var a=s.a,sx=drag.sx,sy=drag.sy,t=s.tag;
@@ -153,7 +153,7 @@ function finishPath(){if(drawing<0)return;var s=S.shapes[drawing],g,p;
  drawing=-1;ghost=null;commit();buildInsp();update()}
 
 /* ---------- actions ---------- */
-function setTool(t){finishPath();S.tool=t;Array.prototype.forEach.call(document.querySelectorAll('#tools button'),function(b){b.className=b.getAttribute('data-t')===t?'on':''});st.style.cursor=t==='select'?'default':'crosshair'}
+function setTool(t){finishPath();S.tool=t;Array.prototype.forEach.call(document.querySelectorAll('#tools button'),function(b){b.className=b.getAttribute('data-t')===t?'on':''});st.style.cursor=t==='view'?'grab':t==='select'?'default':'crosshair';if(t==='view'&&S.sel>=0){S.sel=-1;buildInsp();update()}}
 function del(){if(S.sel<0)return;S.shapes.splice(S.sel,1);S.sel=-1;commit();buildInsp();update()}
 function dup(){var s=S.shapes[S.sel];if(!s)return;var c=JSON.parse(JSON.stringify(s));move(c,1,1);S.shapes.push(c);commit();select(S.shapes.length-1)}
 function swap(d){var i=S.sel,j=i+d;if(i<0||j<0||j>=S.shapes.length)return;var t=S.shapes[i];S.shapes[i]=S.shapes[j];S.shapes[j]=t;S.sel=j;commit();update()}
@@ -175,13 +175,13 @@ document.onkeydown=function(e){var tg=e.target.tagName,inp=tg==='INPUT'||tg==='T
  if(k==='Delete'||k==='Backspace'){e.preventDefault();del();return}
  if(k.indexOf('Arrow')===0&&S.sel>=0){e.preventDefault();var d=(S.step||1)*(e.shiftKey?4:1);
   move(S.shapes[S.sel],k==='ArrowLeft'?-d:k==='ArrowRight'?d:0,k==='ArrowUp'?-d:k==='ArrowDown'?d:0);update();commit();return}
- var tl={v:'select',l:'line',r:'rect',c:'circle',e:'ellipse',p:'path',y:'polyline',g:'polygon'}[k.toLowerCase()];if(tl)setTool(tl)};
+ var tl={v:'select',l:'line',r:'rect',c:'circle',e:'ellipse',p:'path',y:'polyline',g:'polygon',h:'view'}[k.toLowerCase()];if(tl)setTool(tl)};
 window.onresize=layout;
 
 /* ---------- public API for the other modules ---------- */
 IB.S=S;IB.update=update;IB.commit=commit;IB.buildInsp=buildInsp;IB.select=select;IB.layout=layout;IB.load=load;IB.ser=ser;IB.msg=msg;
-IB.pp=pp;IB.ps=ps;IB.abs=abs;IB.r=r;IB.del=del;IB.dup=dup;IB.swap=swap;IB.draw=draw;IB.setTool=setTool;
-st.oncontextmenu=function(e){e.preventDefault();var t=e.target,h=t.__h!==undefined?curH[t.__h]:null;
+IB.pp=pp;IB.pts=pts;IB.ps=ps;IB.abs=abs;IB.r=r;IB.del=del;IB.dup=dup;IB.swap=swap;IB.draw=draw;IB.setTool=setTool;
+st.oncontextmenu=function(e){e.preventDefault();if(S.tool==='view')return false;var t=e.target,h=t.__h!==undefined?curH[t.__h]:null;
  if(h&&h.sg!==undefined){S.seg=h.sg;draw();if(IB.segs)IB.segs();IB.segMenu(e.clientX,e.clientY,h.sg)}
  else if(t.__i!==undefined){select(t.__i);IB.shapeMenu(e.clientX,e.clientY)}return false};
 /* ---------- start with a small sample icon ---------- */

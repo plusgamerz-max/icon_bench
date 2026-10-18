@@ -4,13 +4,13 @@
 <div id="top" class="glass">
  <b>Icon Bench</b>
  <span id="tools">
-  <button data-t="select" class="on">Select (V)</button><button data-t="line">Line (L)</button><button data-t="rect">Rect (R)</button><button data-t="circle">Circle (C)</button><button data-t="ellipse">Ellipse (E)</button><button data-t="polyline">Polyline (Y)</button><button data-t="polygon">Polygon (G)</button><button data-t="path">Path (P)</button>
+  <button data-t="view" title="Look around only: nothing can be selected">View (H)</button><button data-t="select" class="on">Select (V)</button><button data-t="line">Line (L)</button><button data-t="rect">Rect (R)</button><button data-t="circle">Circle (C)</button><button data-t="ellipse">Ellipse (E)</button><button data-t="polyline">Polyline (Y)</button><button data-t="polygon">Polygon (G)</button><button data-t="path">Path (P)</button>
  </span>
  <select id="step" title="Snap to grid"><option value="1">Snap 1</option><option value="0.5">Snap 0.5</option><option value="0.25">Snap 0.25</option><option value="0">Snap off</option></select>
  <button id="undo">Undo</button><button id="redo">Redo</button>
  <span class="zg"><button id="zout" title="Zoom out (-)">&minus;</button><span id="zl">100%</span><button id="zin" title="Zoom in (+)">+</button><button id="zfit" title="Fit (0)">Fit</button></span>
  <span class="sp"></span><span id="pos"></span>
- <button id="import">Import</button><button id="export">Export &#9662;</button>
+ <button id="save">Save</button><button id="lib">Library</button><button id="import">Import</button><button id="export">Export &#9662;</button>
 </div>
 <div id="main">
  <div id="left" class="glass"><div class="h">Layers</div><ul id="layers"></ul>
@@ -25,4 +25,5 @@
 <script src="js/app.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/path-panel.js"></script>
+<script src="js/library.js"></script>
 </body></html>

@@ -16,6 +16,10 @@ Open `index.html` in a modern browser (Chrome, Edge, Firefox). It works from a p
 - **Resizable panels:** drag the thin bars between the panels, like in VS Code.
 - **Code pane:** synced both ways with the canvas.
 - **Import and export:** SVG files (also by drag and drop), PNG at 128 or 512 px, and copy as code.
+- **Reorder points:** drag the grip (three bars) on a point row to change the order of path, polyline and polygon points.
+- **View mode (H):** nothing can be selected, you can only drag to move around the canvas and zoom.
+- **Library:** Save stores the current icon in your browser (local storage). Library opens a browser with search and a large preview (light and dark, several sizes). Double-click an icon to open it in the editor.
+- **Any viewBox:** icons whose viewBox does not start at `0 0` (for example Material Symbols, `0 -960 960 960`) are shown correctly.
 - **Undo and redo:** Ctrl+Z and Ctrl+Y.
 
 ## Shortcuts
@@ -23,6 +27,7 @@ Open `index.html` in a modern browser (Chrome, Edge, Firefox). It works from a p
 | Key | Action |
 | --- | --- |
 | V L R C E Y G P | Select, line, rect, circle, ellipse, polyline, polygon, path |
+| H | View mode (look around only) |
 | Enter / double-click | Finish a path, polyline or polygon |
 | Arrow keys | Nudge the selection (Shift for 4 steps) |
 | Ctrl+D | Duplicate |
@@ -35,7 +40,8 @@ index.html          page layout
 css/style.css       glass theme
 js/app.js           model, canvas, inspector, undo, shape tools
 js/ui.js            menus, zoom, splitters, colour picker, import/export
-js/path-panel.js    path point list and path menus
+js/path-panel.js    path and polygon point lists, reordering, path menus
+js/library.js       save icons in the browser and browse them
 ```
 
 `app.js` exposes a small API on `window.IB` that the other two files use.
