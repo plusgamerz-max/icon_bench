@@ -10,6 +10,6 @@ var P={view:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx=
  polyline:'<path d="M3 17 L9 8 L15 14 L21 5"/>',
  polygon:'<path d="M12 3 L21 10 L17.5 21 L6.5 21 L3 10 Z"/>',
  path:'<path d="M4 18 C8 4 16 4 20 18"/><circle cx="4" cy="18" r="1.6"/><circle cx="20" cy="18" r="1.6"/>'};
-window.IBI=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(P[n]||'')+'</svg>'};
-Array.prototype.forEach.call(document.querySelectorAll('#tools button'),function(b){b.innerHTML=window.IBI(b.getAttribute('data-t'))});
+window.IBI=function(n){return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[n]||'')+'</svg>'};
+Array.prototype.forEach.call(document.querySelectorAll('#tools button'),function(b){if(!b.firstChild)b.innerHTML=window.IBI(b.getAttribute('data-t'))});
 })();
