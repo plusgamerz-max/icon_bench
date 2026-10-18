@@ -4,7 +4,7 @@
 <div id="top" class="glass">
  <b>Icon Bench</b>
  <span id="tools">
-  <button data-t="view" title="Look around only: nothing can be selected">View (H)</button><button data-t="select" class="on">Select (V)</button><button data-t="line">Line (L)</button><button data-t="rect">Rect (R)</button><button data-t="circle">Circle (C)</button><button data-t="ellipse">Ellipse (E)</button><button data-t="polyline">Polyline (Y)</button><button data-t="polygon">Polygon (G)</button><button data-t="path">Path (P)</button>
+  <button data-t="view" title="View (H): look around only, nothing can be selected"></button><button data-t="select" class="on" title="Select (V)"></button><button data-t="rotate" title="Rotate (T): drag to turn the selected shape around its center or a pivot point"></button><button data-t="line" title="Line (L)"></button><button data-t="rect" title="Rect (R)"></button><button data-t="circle" title="Circle (C)"></button><button data-t="ellipse" title="Ellipse (E)"></button><button data-t="polyline" title="Polyline (Y)"></button><button data-t="polygon" title="Polygon (G)"></button><button data-t="path" title="Path (P)"></button>
  </span>
  <select id="step" title="Snap to grid"><option value="1">Snap 1</option><option value="0.5">Snap 0.5</option><option value="0.25">Snap 0.25</option><option value="0">Snap off</option></select>
  <button id="undo">Undo</button><button id="redo">Redo</button>
@@ -22,8 +22,11 @@
 </div>
 <div id="s3" class="sy"></div>
 <div id="bot" class="glass"><div class="h"><span>SVG code (edit it here and the canvas follows)</span><span id="msg"></span></div><textarea id="code" spellcheck="false"></textarea></div>
+<script src="js/icons.js"></script>
 <script src="js/app.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/path-panel.js"></script>
+<script src="js/rotate.js"></script>
+<script src="js/zip.js"></script>
 <script src="js/library.js"></script>
 </body></html>

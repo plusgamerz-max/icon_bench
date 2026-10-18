@@ -17,7 +17,7 @@ IB.menu=function(x,y,items){closeMenu();var m=build(items);m.className='menu gla
  m.style.left=Math.max(4,Math.min(x,innerWidth-w-8))+'px';m.style.top=Math.max(4,Math.min(y,innerHeight-h-8))+'px'};
 document.addEventListener('mousedown',function(e){if(open&&!open.contains(e.target))closeMenu()},true);
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
-document.addEventListener('contextmenu',function(e){if(e.target.id!=='stage'&&!e.target.__h&&!e.target.__i&&!/seg/.test(e.target.className+(e.target.parentNode?e.target.parentNode.className:'')))closeMenu()});
+document.addEventListener('contextmenu',function(e){if(e.target.id!=='stage'&&e.target.__h===undefined&&e.target.__i===undefined&&!/seg/.test(e.target.className+(e.target.parentNode?e.target.parentNode.className:'')))closeMenu()});
 IB.shapeMenu=function(x,y){IB.menu(x,y,[{label:'Duplicate',fn:IB.dup},{label:'Raise',fn:function(){IB.swap(1)}},{label:'Lower',fn:function(){IB.swap(-1)}},{sep:1},{label:'Delete',danger:1,fn:IB.del}])};
 
 /* zoom: buttons, + / - / 0 keys, Ctrl + mouse wheel */
